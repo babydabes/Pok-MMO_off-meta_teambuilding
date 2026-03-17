@@ -46,7 +46,7 @@ enum class PokemmoTier(val label: String) {
     OU("OU"), UU("UU"), NU("NU"), UBER("Uber"), UNTIERED("Untiered");
 
     companion object {
-        fun fromString(s: String): PokemmoTier? = values().firstOrNull { it.label == s }
+        fun fromString(s: String): PokemmoTier? = entries.firstOrNull { it.label == s }
     }
 }
 
@@ -112,7 +112,7 @@ enum class Nature(val atk: Float, val def: Float, val spAtk: Float, val spDef: F
     Quirky(1f, 1f, 1f, 1f, 1f);
 
     companion object {
-        fun fromName(name: String): Nature = values().firstOrNull {
+        fun fromName(name: String): Nature = entries.firstOrNull {
             it.name.equals(name, ignoreCase = true)
         } ?: Hardy
     }

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.pokemmo.core.domain.model.TeamMember
 import com.pokemmo.core.ui.component.PokemonSprite
@@ -35,6 +36,7 @@ fun TeamBuilderScreen(
     viewModel: TeamBuilderViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val searchResults = viewModel.searchResults.collectAsLazyPagingItems()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -143,7 +145,7 @@ fun TeamBuilderScreen(
         PokemonSearchSheet(
             query = uiState.searchQuery,
             onQueryChange = { viewModel.onIntent(TeamBuilderIntent.SearchQueryChanged(it)) },
-            searchResults = uiState.searchResults,
+            searchResults = searchResults,
             onPokemonSelected = { id ->
                 viewModel.onIntent(TeamBuilderIntent.AddPokemon(id, uiState.activeSlot))
             },
@@ -243,14 +245,10 @@ private fun EmptySlotCard(slot: Int, onClick: () -> Unit) {
 private fun PokemonSearchSheet(
     query: String,
     onQueryChange: (String) -> Unit,
-    searchResults: androidx.paging.PagingData<com.pokemmo.core.domain.model.Pokemon>,
+    searchResults: LazyPagingItems<com.pokemmo.core.domain.model.Pokemon>,
     onPokemonSelected: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val pagingItems = remember(searchResults) {
-        kotlinx.coroutines.flow.flowOf(searchResults)
-    }.collectAsLazyPagingItems()
-
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(16.dp).fillMaxHeight(0.8f)) {
             OutlinedTextField(
@@ -267,8 +265,8 @@ private fun PokemonSearchSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(pagingItems.itemCount) { index ->
-                    val pokemon = pagingItems[index]
+                items(searchResults.itemCount) { index ->
+                    val pokemon = searchResults[index]
                     if (pokemon != null) {
                         com.pokemmo.core.ui.component.PokemonCard(
                             pokemon = pokemon,

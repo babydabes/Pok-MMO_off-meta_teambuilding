@@ -1,6 +1,5 @@
 package com.pokemmo.feature.teambuilder
 
-import androidx.paging.PagingData
 import com.pokemmo.core.domain.model.*
 
 data class TeamBuilderUiState(
@@ -9,7 +8,6 @@ data class TeamBuilderUiState(
     val isSearchOpen: Boolean = false,
     val activeSlot: Int = -1,
     val searchQuery: String = "",
-    val searchResults: PagingData<Pokemon> = PagingData.empty(),
     val suggestedSets: List<SmogonSet> = emptyList(),
     val activeSuggestionSlot: Int = -1,
     val isLoading: Boolean = false,

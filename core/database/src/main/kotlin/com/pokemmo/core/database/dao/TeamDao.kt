@@ -16,8 +16,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TeamDao {
 
+    @Transaction
     @Query("SELECT * FROM team WHERE isArchived = 0 ORDER BY updatedAt DESC")
-    fun observeActiveTeams(): Flow<List<TeamEntity>>
+    fun observeAllTeamsWithMembers(): Flow<List<TeamWithMembers>>
 
     @Transaction
     @Query("SELECT * FROM team WHERE id = :teamId")

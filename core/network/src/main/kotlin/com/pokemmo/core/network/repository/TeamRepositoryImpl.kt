@@ -22,11 +22,8 @@ class TeamRepositoryImpl @Inject constructor(
 ) : TeamRepository {
 
     override fun observeAllTeams(): Flow<List<Team>> =
-        teamDao.observeActiveTeams().map { entities ->
-            entities.map { entity ->
-                val members = teamDao.getMembersForTeam(entity.id)
-                entity.toDomain(members)
-            }
+        teamDao.observeAllTeamsWithMembers().map { list ->
+            list.map { it.team.toDomain(it.members) }
         }
 
     override fun observeTeam(teamId: Long): Flow<Team?> =
@@ -135,6 +132,7 @@ class TeamRepositoryImpl @Inject constructor(
 
     private suspend fun TeamEntity.toDomain(memberEntities: List<TeamMemberEntity>): Team {
         val slots = Array<TeamMember?>(6) { null }
+        val typeMap = typeDao.getAllTypes().associateBy { it.name }
         memberEntities.forEach { entity ->
             val pokemon = pokemonDao.getById(entity.pokemonId) ?: return@forEach
             val moveIds = listOf(entity.move1Id, entity.move2Id, entity.move3Id, entity.move4Id)
@@ -142,8 +140,6 @@ class TeamRepositoryImpl @Inject constructor(
             val movesMap = if (moveIds.isNotEmpty())
                 moveDao.getByIds(moveIds).associateBy { it.id }
             else emptyMap()
-            val typeList = typeDao.getAllTypes()
-            val typeMap = typeList.associateBy { it.name }
 
             val domainPokemon = pokemon.toDomain()
             slots[entity.slot.coerceIn(0, 5)] = TeamMember(

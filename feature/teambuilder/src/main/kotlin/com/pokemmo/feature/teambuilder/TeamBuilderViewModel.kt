@@ -3,7 +3,9 @@ package com.pokemmo.feature.teambuilder
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.pokemmo.core.domain.model.Pokemon
 import com.pokemmo.core.domain.model.SmogonSet
 import com.pokemmo.core.domain.usecase.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,6 +34,14 @@ class TeamBuilderViewModel @Inject constructor(
 
     private val _effects = Channel<TeamBuilderEffect>(Channel.BUFFERED)
     val effects: Flow<TeamBuilderEffect> = _effects.receiveAsFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchResults: Flow<PagingData<Pokemon>> = _searchQuery
+        .flatMapLatest { query ->
+            if (query.length >= 2) searchPokemonUseCase(query)
+            else flowOf(PagingData.empty())
+        }
+        .cachedIn(viewModelScope)
 
     init {
         observeTeam()
@@ -76,14 +86,7 @@ class TeamBuilderViewModel @Inject constructor(
 
     private fun updateSearch(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
-        if (query.length < 2) return
-        viewModelScope.launch {
-            searchPokemonUseCase(query)
-                .cachedIn(viewModelScope)
-                .collect { paged ->
-                    _uiState.update { it.copy(searchResults = paged) }
-                }
-        }
+        _searchQuery.value = query
     }
 
     private fun addPokemon(pokemonId: Int, slot: Int) {

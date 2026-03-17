@@ -2,8 +2,6 @@ package com.pokemmo.core.database.di
 
 import android.content.Context
 import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.pokemmo.core.database.AppDatabase
 import com.pokemmo.core.database.dao.*
 import com.pokemmo.core.database.seed.DatabaseSeeder
@@ -24,20 +22,15 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
-        var db: AppDatabase? = null
-        return Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
-            .addCallback(object : RoomDatabase.Callback() {
-                override fun onCreate(sqLiteDb: SupportSQLiteDatabase) {
-                    super.onCreate(sqLiteDb)
-                    // Seed initial data on first creation
-                    CoroutineScope(Dispatchers.IO).launch {
-                        db?.let { DatabaseSeeder.seed(it) }
-                    }
-                }
-            })
+        val db = Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
             .fallbackToDestructiveMigration()
             .build()
-            .also { db = it }
+        CoroutineScope(Dispatchers.IO).launch {
+            if (db.pokemonDao().count() == 0) {
+                DatabaseSeeder.seed(db)
+            }
+        }
+        return db
     }
 
     @Provides fun providePokemonDao(db: AppDatabase): PokemonDao = db.pokemonDao()
